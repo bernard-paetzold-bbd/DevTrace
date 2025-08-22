@@ -1,7 +1,6 @@
 import { z } from 'zod';
-import { GetBranches } from './getBranches/getBranches.js';
 
-const GITHUB_TOKEN = 'move_to_config';
+import { GetBranches } from './getBranches/getBranches.js';
 
 const getBranchListRequestSchema = z.object({
 	url: z.string().describe('Repository url you want to query')
@@ -31,8 +30,8 @@ export function listTools() {
 export async function callRepoBranchesTool(args: any) {
 	try {
 		const { url } = getBranchListRequestSchema.parse(args);
-		// Use the GetBranches function from getBranches
-		return await GetBranches(url, GITHUB_TOKEN);
+
+		return await GetBranches(url);
 	} catch (error) {
 		return {
 			isError: true,
