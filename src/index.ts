@@ -18,17 +18,21 @@ const server = new Server(
 	}
 );
 
+import { listTools } from './tools/tools.js';
+
+import { callRepoBranchesTool } from './tools/branches.js';
 import {
-	callRepoBranchesTool,
+	callIssuesTool,
+	callIssueTool,
+	callIssueCommits
+} from './tools/issues.js';
+import { callPullRequestsTool } from './tools/pullRequests.js';
+import {
 	callCommitsTool,
 	callCompareCommitsTool,
 	callGetCommitDetailsTool,
-	callAnalyzeAuthorWorkTool,
-	listTools,
-	callPullRequestsTool,
-	callIssuesTool,
-	callIssueTool
-} from './tools/tools.js';
+	callAnalyzeAuthorWorkTool
+} from './tools/commits.js';
 
 server.setRequestHandler(ListToolsRequestSchema, async () => {
 	return listTools();
