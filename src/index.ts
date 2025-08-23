@@ -17,7 +17,11 @@ const server = new Server(
 	}
 );
 
-import { callRepoBranchesTool, listTools } from './tools/tools.js';
+import {
+	callRepoBranchesTool,
+	callCommitsTool,
+	listTools
+} from './tools/tools.js';
 
 server.setRequestHandler(ListToolsRequestSchema, async () => {
 	return listTools();
@@ -26,6 +30,9 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
 server.setRequestHandler(CallToolRequestSchema, async request => {
 	if (request.params.name === 'get_repo_branches') {
 		return callRepoBranchesTool(request.params.arguments);
+	}
+	if (request.params.name === 'get_commits') {
+		return callCommitsTool(request.params.arguments);
 	}
 	// Handle unknown tool
 	return {
