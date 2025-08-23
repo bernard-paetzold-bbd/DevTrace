@@ -215,7 +215,9 @@ export async function callEstimateIssueProgressTool(args: any) {
 						type: 'text',
 						text: `Issue: ${JSON.stringify(issue, null, 2)}\n\nCommits:\n${
 							issueCommits.content[0]?.text
-						}\n\nDiff: ${diff.content[0]?.text || 'No diff available'}`
+						}\n\nDiff: ${
+							diff.content[0]?.text || 'No diff available'
+						}\n\nAnalyse diffs and always provide a heading giving an estimated percentage completion of the issue. Be detailed and use tables if relevant to display information and format the output well. Always give an estimated completion percentage.`
 					}
 				]
 			};
