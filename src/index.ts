@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import {
@@ -20,6 +21,9 @@ const server = new Server(
 import {
 	callRepoBranchesTool,
 	callCommitsTool,
+	callCompareCommitsTool,
+	callGetCommitDetailsTool,
+	callAnalyzeAuthorWorkTool,
 	listTools,
 	callPullRequestsTool
 } from './tools/tools.js';
@@ -34,6 +38,15 @@ server.setRequestHandler(CallToolRequestSchema, async request => {
 	}
 	if (request.params.name === 'get_commits') {
 		return callCommitsTool(request.params.arguments);
+	}
+	if (request.params.name === 'compare_commits') {
+		return callCompareCommitsTool(request.params.arguments);
+	}
+	if (request.params.name === 'get_commit_details') {
+		return callGetCommitDetailsTool(request.params.arguments);
+	}
+	if (request.params.name === 'analyze_author_work') {
+		return callAnalyzeAuthorWorkTool(request.params.arguments);
 	}
 	if (request.params.name === 'get_pull_requests') {
 		return callPullRequestsTool(request.params.arguments);
