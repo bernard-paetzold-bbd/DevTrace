@@ -1,0 +1,73 @@
+name: Create Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version number (e.g., 1.2.3)'
+        required: true
+        type: string
+      release_name:
+        description: 'Release name (optional - defaults to version)'
+        required: false
+        type: string
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          ref: main
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build the project
+        run: npm run build
+
+      - name: Zip the build folder
+        run: zip -r dev-trace.zip build
+
+      - name: Create tag
+        id: tag
+        run: |
+          # Use the input version
+          VERSION="${{ github.event.inputs.version }}"
+          TAG="v$VERSION"
+          
+          echo "Creating tag: $TAG"
+          echo "TAG_NAME=$TAG" >> $GITHUB_ENV
+          echo "TAG_NAME=$TAG" >> $GITHUB_OUTPUT
+          
+          git config --global user.email "actions@github.com"
+          git config --global user.name "GitHub Actions"
+          git tag $TAG
+          git push origin $TAG
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.tag.outputs.TAG_NAME }}
+          release_name: ${{ github.event.inputs.release_name || steps.tag.outputs.TAG_NAME }}
+          draft: false
+
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: dev-trace.zip
+          asset_name: dev-trace.zip
+          asset_content_type: application/zip
