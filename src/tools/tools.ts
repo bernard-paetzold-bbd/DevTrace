@@ -227,6 +227,43 @@ export function listTools() {
 					},
 					required: ['url']
 				}
+			},
+			{
+				name: 'estimate_issue_progress',
+				description:
+					'Estimate the progress of an issue based on its commits, use the returned issue description to estimate the progress.',
+				inputSchema: {
+					type: 'object',
+					properties: {
+						url: { type: 'string', description: 'Repository url to query' },
+						issue_number: {
+							type: 'number',
+							description: 'Issue number to estimate progress for'
+						}
+					},
+					required: ['url', 'issue_number']
+				}
+			},
+			{
+				name: 'get_branch_commits',
+				description:
+					'Get commits made only on a specific branch (not inherited from base branch). This shows what work was done specifically on the feature branch.',
+				inputSchema: {
+					type: 'object',
+					properties: {
+						url: { type: 'string', description: 'Repository url to query' },
+						branch: {
+							type: 'string',
+							description: 'The feature branch to get commits for'
+						},
+						base_branch: {
+							type: 'string',
+							description:
+								'The base branch to compare against (defaults to "main")'
+						}
+					},
+					required: ['url', 'branch']
+				}
 			}
 		]
 	};

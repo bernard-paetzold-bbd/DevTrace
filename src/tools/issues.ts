@@ -1,6 +1,13 @@
 import z from 'zod';
 import { extractUrlInformation } from '../utils/extractUrlInformation.js';
+import { findBranchByIssueNumber } from '../utils/findBranchByIssueNumber.js';
 import { GithubService } from '../services/github/githubService.js';
+import { callCompareCommitsTool } from './commits.js';
+import {
+	getBranchCommits,
+	getCommits,
+	type CommitsResponse
+} from '../services/github/commitsService.js';
 
 export async function callIssueTool(args: any) {
 	try {
@@ -75,17 +82,8 @@ export async function callIssueCommits(args: any) {
 		const parsed = schema.parse(args);
 		const { url, issue_number } = parsed;
 		const { owner, repo } = extractUrlInformation(url);
-		// Get all branches
-		const branchesResult = await GithubService.getBranches(owner, repo);
-		const branchesText = branchesResult.content[0]?.text || '';
-		// Regex for developer/feature/issue_number (allowing both / and - as separators)
-		const regex = new RegExp(
-			`^[^/]+/[^/]+/(?:${issue_number}|${issue_number
-				.toString()
-				.padStart(4, '0')})$`,
-			'i'
-		);
-		const branch = branchesText.split('\n').find(b => regex.test(b.trim()));
+
+		const branch = await findBranchByIssueNumber(owner, repo, issue_number);
 		if (!branch) {
 			return {
 				isError: true,
@@ -97,6 +95,7 @@ export async function callIssueCommits(args: any) {
 				]
 			};
 		}
+
 		// Get commits for the found branch
 		const commitsResult = await GithubService.getCommits(owner, repo, {
 			sha: branch
@@ -109,6 +108,138 @@ export async function callIssueCommits(args: any) {
 				{
 					type: 'text',
 					text: `Error searching for issue branch commits: \n  ${
+						error instanceof Error ? error.message : 'Unknown error'
+					}`
+				}
+			]
+		};
+	}
+}
+
+export async function callEstimateIssueProgressTool(args: any) {
+	try {
+		const schema = z.object({
+			url: z.string().describe('Repository url you want to query'),
+			issue_number: z.number().describe('Issue number to estimate progress for')
+		});
+		const parsed = schema.parse(args);
+		const { url, issue_number } = parsed;
+		const { owner, repo } = extractUrlInformation(url);
+
+		const issue = await GithubService.getIssue(owner, repo, issue_number);
+
+		const branch = await findBranchByIssueNumber(owner, repo, issue_number);
+		if (!branch) {
+			return {
+				content: [
+					{
+						type: 'text',
+						text: `Issue: ${JSON.stringify(
+							issue,
+							null,
+							2
+						)}\n\nNo branch found for issue number ${issue_number}`
+					}
+				]
+			};
+		}
+
+		let issueCommits = await getBranchCommits(owner, repo, branch);
+		const allCommits = await getCommits(owner, repo, { sha: branch });
+
+		// If no commits found (probably already merged), fall back to generic commits endpoint
+		if (
+			!('commits' in issueCommits) ||
+			!issueCommits.commits ||
+			issueCommits.commits.length === 0
+		) {
+			issueCommits = allCommits;
+		}
+
+		// Check if we have commits and they're in the expected format
+		if (
+			'commits' in issueCommits &&
+			issueCommits.commits &&
+			issueCommits.commits.length > 0
+		) {
+			// Find the last commit on the base branch that is not in the branch commits
+			// allCommits.commits: all commits on the base branch (including merged ones)
+			// issueCommits.commits: commits unique to the feature branch
+			let firstCommit = null;
+			if (
+				Array.isArray(allCommits.commits) &&
+				Array.isArray(issueCommits.commits)
+			) {
+				// Create a Set of SHAs in the branch commits
+				const branchCommitShas = new Set(
+					issueCommits.commits.map((c: any) => c.sha)
+				);
+				// Find the last commit in allCommits that is NOT in the branch commits
+				firstCommit = allCommits.commits.find(
+					(c: any) => !branchCommitShas.has(c.sha)
+				);
+				// If not found (e.g. branch not diverged), fallback to first in branch
+				if (!firstCommit && issueCommits.commits.length > 0) {
+					firstCommit = issueCommits.commits[0];
+				}
+			} else {
+				firstCommit = issueCommits.commits[0];
+			}
+			const lastCommit = issueCommits.commits[issueCommits.commits.length - 1];
+
+			if (!firstCommit) {
+				return {
+					content: [
+						{
+							type: 'text',
+							text: `Issue: ${JSON.stringify(
+								issue,
+								null,
+								2
+							)}\n\nNo valid base commit found for diff.\nCommits:\n${
+								issueCommits.content[0]?.text
+							}`
+						}
+					]
+				};
+			}
+			const diff = await callCompareCommitsTool({
+				url,
+				base: firstCommit.sha,
+				head: lastCommit.sha
+			});
+
+			return {
+				content: [
+					{
+						type: 'text',
+						text: `Issue: ${JSON.stringify(issue, null, 2)}\n\nCommits:\n${
+							issueCommits.content[0]?.text
+						}\n\nDiff: ${
+							diff.content[0]?.text || 'No diff available'
+						}\n\nAnalyse diffs and always provide a heading giving an estimated percentage completion of the issue. Be detailed and use tables if relevant to display information and format the output well. Always give an estimated completion percentage.`
+					}
+				]
+			};
+		}
+
+		return {
+			content: [
+				{
+					type: 'text',
+					text: `Issue: ${JSON.stringify(issue, null, 2)}\n\nCommits:\n${
+						issueCommits.content[0]?.text
+					}`
+				}
+			]
+		};
+	} catch (error) {
+		return {
+			isError: true,
+			content: [
+				{
+					type: 'text',
+					text: `Error estimating issue progress: \n  ${
 						error instanceof Error ? error.message : 'Unknown error'
 					}`
 				}

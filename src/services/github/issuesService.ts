@@ -21,29 +21,11 @@ export const getIssue = async (
 	}
 	const data = await response.json();
 
-	console.log(data);
-
-	// Format the issue data as text for MCP response
-	const issueText = `Issue #${data.number}: ${data.title}
-State: ${data.state}
-Author: ${data.user?.login || 'Unknown'}
-Created: ${data.created_at}
-Updated: ${data.updated_at}
-URL: ${data.html_url}
-
-${data.body || 'No description provided.'}
-
-Labels: ${data.labels?.map((label: any) => label.name).join(', ') || 'None'}
-Assignees: ${
-		data.assignees?.map((assignee: any) => assignee.login).join(', ') || 'None'
-	}
-Comments: ${data.comments || 0}`;
-
 	return {
 		content: [
 			{
 				type: 'text',
-				text: issueText
+				text: JSON.stringify(data, null, 2)
 			}
 		]
 	};
@@ -96,7 +78,6 @@ export const getIssues = async (
 	const apiUrl = `https://api.github.com/repos/${owner}/${repo}/issues${
 		paramString ? `?${paramString}` : ''
 	}`;
-	console.log(apiUrl);
 	const response = await fetch(apiUrl, {
 		headers: {
 			Authorization: `Bearer ${GITHUB_TOKEN}`
@@ -107,7 +88,7 @@ export const getIssues = async (
 	}
 	const data = await response.json();
 
-	// Format issues as text for MCP response
+	// Return the full raw JSON issues array for MCP response
 	if (!Array.isArray(data) || data.length === 0) {
 		return {
 			content: [
@@ -119,22 +100,11 @@ export const getIssues = async (
 		};
 	}
 
-	const issuesText = data
-		.map((issue: any) => {
-			return `Issue #${issue.number}: ${issue.title}
-State: ${issue.state}
-Author: ${issue.user?.login || 'Unknown'}
-URL: ${issue.html_url}
-Created: ${issue.created_at}
-Labels: ${issue.labels?.map((label: any) => label.name).join(', ') || 'None'}`;
-		})
-		.join('\n\n-------------------\n\n');
-
 	return {
 		content: [
 			{
 				type: 'text',
-				text: issuesText
+				text: JSON.stringify(data, null, 2)
 			}
 		]
 	};
