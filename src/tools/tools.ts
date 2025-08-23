@@ -247,7 +247,7 @@ export function listTools() {
 			{
 				name: 'estimate_issue_progress',
 				description:
-					'Estimate the progress of an issue based on its commits, use the returned issue description to estimate the progress.',
+					'Estimate the progress of an issue based on its commits, get its current status, and use the returned issue description to estimate the progress.',
 				inputSchema: {
 					type: 'object',
 					properties: {
