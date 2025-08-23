@@ -11,7 +11,7 @@ export function listTools() {
 		tools: [
 			{
 				name: 'get_repo_branches',
-				description: 'List git branches in a specified repository',
+				description: 'Query the list of branches in a GitHub repository',
 				inputSchema: {
 					type: 'object',
 					properties: {
@@ -69,6 +69,70 @@ export function listTools() {
 					},
 					required: ['url']
 				}
+			},
+			{
+				name: 'compare_commits',
+				description:
+					'Compare two commits or branches to see what changed between them. Great for understanding work done in a period.',
+				inputSchema: {
+					type: 'object',
+					properties: {
+						url: { type: 'string', description: 'Repository url to query' },
+						base: {
+							type: 'string',
+							description: 'Base branch or commit SHA to compare from'
+						},
+						head: {
+							type: 'string',
+							description: 'Head branch or commit SHA to compare to'
+						}
+					},
+					required: ['url', 'base', 'head']
+				}
+			},
+			{
+				name: 'get_commit_details',
+				description:
+					'Get detailed information about a specific commit including all file changes',
+				inputSchema: {
+					type: 'object',
+					properties: {
+						url: { type: 'string', description: 'Repository url to query' },
+						sha: {
+							type: 'string',
+							description: 'Commit SHA to get details for'
+						}
+					},
+					required: ['url', 'sha']
+				}
+			},
+			{
+				name: 'analyze_author_work',
+				description:
+					'Analyze what a specific person worked on between dates or commits. Perfect for "What did Alex do between Tuesday and Friday on branch X?"',
+				inputSchema: {
+					type: 'object',
+					properties: {
+						url: { type: 'string', description: 'Repository url to query' },
+						author: {
+							type: 'string',
+							description: 'GitHub username or email of the author'
+						},
+						since: {
+							type: 'string',
+							description: 'Start date (ISO 8601) or commit SHA'
+						},
+						until: {
+							type: 'string',
+							description: 'End date (ISO 8601) or commit SHA'
+						},
+						branch: {
+							type: 'string',
+							description: 'Specific branch to analyze'
+						}
+					},
+					required: ['url', 'author']
+				}
 			}
 		]
 	};
@@ -118,6 +182,83 @@ export async function callCommitsTool(args: any) {
 				{
 					type: 'text',
 					text: `Error searching for commits: \n  ${
+						error instanceof Error ? error.message : 'Unknown error'
+					}`
+				}
+			]
+		};
+	}
+}
+
+export async function callCompareCommitsTool(args: any) {
+	try {
+		const schema = z.object({
+			url: z.string().describe('Repository url you want to query'),
+			base: z.string().describe('Base branch or commit SHA'),
+			head: z.string().describe('Head branch or commit SHA')
+		});
+		const { url, base, head } = schema.parse(args);
+		const { owner, repo } = extractUrlInformation(url);
+		return await GithubService.compareCommits(owner, repo, base, head);
+	} catch (error) {
+		return {
+			isError: true,
+			content: [
+				{
+					type: 'text',
+					text: `Error comparing commits: \n  ${
+						error instanceof Error ? error.message : 'Unknown error'
+					}`
+				}
+			]
+		};
+	}
+}
+
+export async function callGetCommitDetailsTool(args: any) {
+	try {
+		const schema = z.object({
+			url: z.string().describe('Repository url you want to query'),
+			sha: z.string().describe('Commit SHA')
+		});
+		const { url, sha } = schema.parse(args);
+		const { owner, repo } = extractUrlInformation(url);
+		return await GithubService.getCommitDetails(owner, repo, sha);
+	} catch (error) {
+		return {
+			isError: true,
+			content: [
+				{
+					type: 'text',
+					text: `Error getting commit details: \n  ${
+						error instanceof Error ? error.message : 'Unknown error'
+					}`
+				}
+			]
+		};
+	}
+}
+
+export async function callAnalyzeAuthorWorkTool(args: any) {
+	try {
+		const schema = z.object({
+			url: z.string().describe('Repository url you want to query'),
+			author: z.string().describe('Author username or email'),
+			since: z.string().optional(),
+			until: z.string().optional(),
+			branch: z.string().optional()
+		});
+		const { url, author, since, until, branch } = schema.parse(args);
+		const { owner, repo } = extractUrlInformation(url);
+		const options = { since, until, branch };
+		return await GithubService.analyzeAuthorWork(owner, repo, author, options);
+	} catch (error) {
+		return {
+			isError: true,
+			content: [
+				{
+					type: 'text',
+					text: `Error analyzing author work: \n  ${
 						error instanceof Error ? error.message : 'Unknown error'
 					}`
 				}
