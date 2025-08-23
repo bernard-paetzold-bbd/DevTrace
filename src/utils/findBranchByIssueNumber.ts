@@ -17,9 +17,11 @@ export async function findBranchByIssueNumber(
 		const branchesResult = await GithubService.getBranches(owner, repo);
 		const branchesText = branchesResult.content[0]?.text || '';
 
-		// Regex for developer/feature/issue_number (allowing both / and - as separators)
+		console.log(branchesResult);
+
+		// Regex for developer/feature/#issue_number (requiring # before the issue number)
 		const regex = new RegExp(
-			`^[^/]+/[^/]+/(?:${issueNumber}|${issueNumber
+			`^[^/]+/[^/]+/#(?:${issueNumber}|${issueNumber
 				.toString()
 				.padStart(4, '0')})$`,
 			'i'

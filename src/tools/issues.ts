@@ -145,6 +145,7 @@ export async function callEstimateIssueProgressTool(args: any) {
 		}
 
 		let issueCommits = await getBranchCommits(owner, repo, branch);
+		const allCommits = await getCommits(owner, repo, { sha: branch });
 
 		// If no commits found (probably already merged), fall back to generic commits endpoint
 		if (
@@ -152,10 +153,7 @@ export async function callEstimateIssueProgressTool(args: any) {
 			!issueCommits.commits ||
 			issueCommits.commits.length === 0
 		) {
-			issueCommits = await getCommits(owner, repo, {
-				sha: branch,
-				per_page: 10
-			});
+			issueCommits = allCommits;
 		}
 
 		// Check if we have commits and they're in the expected format
@@ -164,9 +162,47 @@ export async function callEstimateIssueProgressTool(args: any) {
 			issueCommits.commits &&
 			issueCommits.commits.length > 0
 		) {
-			const firstCommit = issueCommits.commits[0];
+			// Find the last commit on the base branch that is not in the branch commits
+			// allCommits.commits: all commits on the base branch (including merged ones)
+			// issueCommits.commits: commits unique to the feature branch
+			let firstCommit = null;
+			if (
+				Array.isArray(allCommits.commits) &&
+				Array.isArray(issueCommits.commits)
+			) {
+				// Create a Set of SHAs in the branch commits
+				const branchCommitShas = new Set(
+					issueCommits.commits.map((c: any) => c.sha)
+				);
+				// Find the last commit in allCommits that is NOT in the branch commits
+				firstCommit = allCommits.commits.find(
+					(c: any) => !branchCommitShas.has(c.sha)
+				);
+				// If not found (e.g. branch not diverged), fallback to first in branch
+				if (!firstCommit && issueCommits.commits.length > 0) {
+					firstCommit = issueCommits.commits[0];
+				}
+			} else {
+				firstCommit = issueCommits.commits[0];
+			}
 			const lastCommit = issueCommits.commits[issueCommits.commits.length - 1];
 
+			if (!firstCommit) {
+				return {
+					content: [
+						{
+							type: 'text',
+							text: `Issue: ${JSON.stringify(
+								issue,
+								null,
+								2
+							)}\n\nNo valid base commit found for diff.\nCommits:\n${
+								issueCommits.content[0]?.text
+							}`
+						}
+					]
+				};
+			}
 			const diff = await callCompareCommitsTool({
 				url,
 				base: firstCommit.sha,

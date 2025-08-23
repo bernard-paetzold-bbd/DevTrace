@@ -116,13 +116,18 @@ export const getBranchCommits = async (
 	baseBranch: string = 'main'
 ): Promise<CommitsResponse> => {
 	const GITHUB_TOKEN = process.env.GITHUB_TOKEN || '';
-	const apiUrl = `https://api.github.com/repos/${owner}/${repo}/compare/${baseBranch}...${branch}`;
+	// URL encode the branch names to handle special characters like #
+	const encodedBaseBranch = encodeURIComponent(baseBranch.trim());
+	const encodedBranch = encodeURIComponent(branch.trim());
+	const apiUrl = `https://api.github.com/repos/${owner}/${repo}/compare/${encodedBaseBranch}...${encodedBranch}`;
 
 	const response = await fetch(apiUrl, {
 		headers: {
 			Authorization: `Bearer ${GITHUB_TOKEN}`
 		}
 	});
+
+	console.log(apiUrl.trim());
 
 	if (!response.ok) {
 		throw new Error(`GitHub API error: ${response.statusText}`);
