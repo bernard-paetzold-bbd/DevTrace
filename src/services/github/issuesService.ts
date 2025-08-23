@@ -1,0 +1,141 @@
+/**
+ * Get a single issue for a repo by issue number.
+ * @param owner string (required)
+ * @param repo string (required)
+ * @param issue_number number (required)
+ */
+export const getIssue = async (
+	owner: string,
+	repo: string,
+	issue_number: number
+) => {
+	const GITHUB_TOKEN = process.env.GITHUB_TOKEN || '';
+	const apiUrl = `https://api.github.com/repos/${owner}/${repo}/issues/${issue_number}`;
+	const response = await fetch(apiUrl, {
+		headers: {
+			Authorization: `Bearer ${GITHUB_TOKEN}`
+		}
+	});
+	if (!response.ok) {
+		throw new Error(`GitHub API error: ${response.statusText}`);
+	}
+	const data = await response.json();
+
+	console.log(data);
+
+	// Format the issue data as text for MCP response
+	const issueText = `Issue #${data.number}: ${data.title}
+State: ${data.state}
+Author: ${data.user?.login || 'Unknown'}
+Created: ${data.created_at}
+Updated: ${data.updated_at}
+URL: ${data.html_url}
+
+${data.body || 'No description provided.'}
+
+Labels: ${data.labels?.map((label: any) => label.name).join(', ') || 'None'}
+Assignees: ${
+		data.assignees?.map((assignee: any) => assignee.login).join(', ') || 'None'
+	}
+Comments: ${data.comments || 0}`;
+
+	return {
+		content: [
+			{
+				type: 'text',
+				text: issueText
+			}
+		]
+	};
+};
+
+/**
+ * Get multiple issues for a repo with flexible query params.
+ * @param owner string (required)
+ * @param repo string (required)
+ * @param options object (all query params optional)
+ */
+export const getIssues = async (
+	owner: string,
+	repo: string,
+	options?: {
+		filter?: string;
+		state?: string;
+		labels?: string;
+		sort?: string;
+		direction?: string;
+		since?: string;
+		collab?: boolean;
+		orgs?: boolean;
+		owned?: boolean;
+		pulls?: boolean;
+		per_page?: number;
+		page?: number;
+	}
+) => {
+	const GITHUB_TOKEN = process.env.GITHUB_TOKEN || '';
+	const params = new URLSearchParams();
+	if (options) {
+		if (options.filter) params.append('filter', options.filter);
+		if (options.state) params.append('state', options.state);
+		if (options.labels) params.append('labels', options.labels);
+		if (options.sort) params.append('sort', options.sort);
+		if (options.direction) params.append('direction', options.direction);
+		if (options.since) params.append('since', options.since);
+		if (options.collab !== undefined)
+			params.append('collab', String(options.collab));
+		if (options.orgs !== undefined) params.append('orgs', String(options.orgs));
+		if (options.owned !== undefined)
+			params.append('owned', String(options.owned));
+		if (options.pulls !== undefined)
+			params.append('pulls', String(options.pulls));
+		if (options.per_page) params.append('per_page', String(options.per_page));
+		if (options.page) params.append('page', String(options.page));
+	}
+	const paramString = params.toString();
+	const apiUrl = `https://api.github.com/repos/${owner}/${repo}/issues${
+		paramString ? `?${paramString}` : ''
+	}`;
+	console.log(apiUrl);
+	const response = await fetch(apiUrl, {
+		headers: {
+			Authorization: `Bearer ${GITHUB_TOKEN}`
+		}
+	});
+	if (!response.ok) {
+		throw new Error(`GitHub API error: ${response.statusText}`);
+	}
+	const data = await response.json();
+
+	// Format issues as text for MCP response
+	if (!Array.isArray(data) || data.length === 0) {
+		return {
+			content: [
+				{
+					type: 'text',
+					text: 'No issues found for the specified criteria.'
+				}
+			]
+		};
+	}
+
+	const issuesText = data
+		.map((issue: any) => {
+			return `Issue #${issue.number}: ${issue.title}
+State: ${issue.state}
+Author: ${issue.user?.login || 'Unknown'}
+URL: ${issue.html_url}
+Created: ${issue.created_at}
+Labels: ${issue.labels?.map((label: any) => label.name).join(', ') || 'None'}`;
+		})
+		.join('\n\n-------------------\n\n');
+
+	return {
+		content: [
+			{
+				type: 'text',
+				text: issuesText
+			}
+		]
+	};
+};
