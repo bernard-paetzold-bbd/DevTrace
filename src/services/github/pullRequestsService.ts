@@ -53,7 +53,9 @@ export const getPullRequests = async (
 			const user = pr.user?.login || 'Unknown';
 			const state = pr.state;
 			const created = pr.created_at;
-			return `#${number} [${state}] by ${user} on ${created}\nTitle: ${title}\n`;
+            const head = pr.head?.sha || 'Unknown';
+            const base = pr.base?.sha || 'Unknown';
+			return `#${number} [${state}] by ${user} on ${created}\nTitle: ${title}\nHead: ${head}\nBase: ${base}\n`;
 		})
 		.join('\n---------------------\n');
 	return {
