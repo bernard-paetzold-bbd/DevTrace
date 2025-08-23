@@ -184,7 +184,7 @@ export const GithubService = {
 	) => {
 		const GITHUB_TOKEN = process.env.GITHUB_TOKEN || '';
 		const apiUrl = `https://api.github.com/repos/${owner}/${repo}/compare/${base}...${head}`;
-		
+
 		// Fetch the full diff
 		const response = await fetch(apiUrl, {
 			headers: {
@@ -192,13 +192,13 @@ export const GithubService = {
 				Accept: 'application/vnd.github.v3.diff'
 			}
 		});
-		
+
 		if (!response.ok) {
 			throw new Error(`GitHub API error: ${response.statusText}`);
 		}
-		
+
 		const diffText = await response.text();
-		
+
 		// Also fetch basic metadata for context
 		const jsonResponse = await fetch(apiUrl, {
 			headers: {
@@ -213,12 +213,21 @@ export const GithubService = {
 
 		**Context:**
 		- Commits: ${data.commits?.length || 0}
-		- Authors: ${[...new Set(data.commits?.map((c: any) => c.commit.author?.name) || [])].join(', ')}
-		- Period: ${new Date(data.commits?.[0]?.commit?.author?.date).toLocaleDateString()} to ${new Date(data.commits?.[data.commits.length - 1]?.commit?.author?.date).toLocaleDateString()}
+		- Authors: ${[
+			...new Set(data.commits?.map((c: any) => c.commit.author?.name) || [])
+		].join(', ')}
+		- Period: ${new Date(
+			data.commits?.[0]?.commit?.author?.date
+		).toLocaleDateString()} to ${new Date(
+			data.commits?.[data.commits.length - 1]?.commit?.author?.date
+		).toLocaleDateString()}
 		- Files changed: ${data.files?.length}
 
 		**Commit messages:**
-		${data.commits?.map((c: any) => `- ${c.commit.message.split('\n')[0]}`).slice(0, 10).join('\n')}
+		${data.commits
+			?.map((c: any) => `- ${c.commit.message.split('\n')[0]}`)
+			.slice(0, 10)
+			.join('\n')}
 
 		**Full diff for analysis:**
 		\`\`\`diff
@@ -243,11 +252,7 @@ export const GithubService = {
 	 * @param repo string (required)
 	 * @param sha string (required) - commit SHA
 	 */
-	getCommitDetails: async (
-		owner: string,
-		repo: string,
-		sha: string
-	) => {
+	getCommitDetails: async (owner: string, repo: string, sha: string) => {
 		const GITHUB_TOKEN = process.env.GITHUB_TOKEN || '';
 		const apiUrl = `https://api.github.com/repos/${owner}/${repo}/commits/${sha}`;
 		const response = await fetch(apiUrl, {
@@ -268,7 +273,7 @@ export const GithubService = {
 			}
 		});
 		const patchText = await patchResponse.text();
-		
+
 		// Return the full patch with context for AI interpretation
 		const output = `
 		## Commit: ${data.sha.substring(0, 7)}
@@ -281,7 +286,14 @@ export const GithubService = {
 		- Stats: +${data.stats?.additions || 0} -${data.stats?.deletions || 0}
 
 		**Files modified:**
-		${data.files?.map((f: any) => `- ${f.filename} (${f.status}): +${f.additions} -${f.deletions}`).join('\n') || 'No files'}
+		${
+			data.files
+				?.map(
+					(f: any) =>
+						`- ${f.filename} (${f.status}): +${f.additions} -${f.deletions}`
+				)
+				.join('\n') || 'No files'
+		}
 
 		**Full patch for analysis:**
 		\`\`\`patch
@@ -322,8 +334,8 @@ export const GithubService = {
 		const GITHUB_TOKEN = process.env.GITHUB_TOKEN || '';
 		const params = new URLSearchParams();
 		params.append('author', author);
-		if (options?.since) params.append('since', options.since + "T00:00:00Z");
-		if (options?.until) params.append('until', options.until + "T23:59:59Z");
+		if (options?.since) params.append('since', options.since + 'T00:00:00Z');
+		if (options?.until) params.append('until', options.until + 'T23:59:59Z');
 		if (options?.branch) params.append('sha', options.branch);
 		params.append('per_page', '100');
 
@@ -368,13 +380,18 @@ export const GithubService = {
 		const validPatches = commitPatches.filter(p => p !== null);
 
 		// Build time description
-		const timeDesc = options?.since && options?.until
-			? `between ${new Date(options.since).toLocaleDateString()} and ${new Date(options.until).toLocaleDateString()}`
-			: options?.since
-			? `since ${new Date(options.since).toLocaleDateString()}`
-			: options?.until
-			? `until ${new Date(options.until).toLocaleDateString()}`
-			: 'in the recent history';
+		const timeDesc =
+			options?.since && options?.until
+				? `between ${new Date(
+						options.since
+				  ).toLocaleDateString()} and ${new Date(
+						options.until
+				  ).toLocaleDateString()}`
+				: options?.since
+				? `since ${new Date(options.since).toLocaleDateString()}`
+				: options?.until
+				? `until ${new Date(options.until).toLocaleDateString()}`
+				: 'in the recent history';
 
 		const branchDesc = options?.branch ? ` on branch "${options.branch}"` : '';
 
@@ -389,10 +406,19 @@ export const GithubService = {
 		- Showing detailed patches for: ${validPatches.length} most recent commits
 
 		**Commit list:**
-		${commits.map((c: any) => `- ${c.sha.substring(0, 7)}: ${c.commit.message.split('\n')[0]} (${new Date(c.commit.author?.date).toLocaleDateString()})`).join('\n')}
+		${commits
+			.map(
+				(c: any) =>
+					`- ${c.sha.substring(0, 7)}: ${
+						c.commit.message.split('\n')[0]
+					} (${new Date(c.commit.author?.date).toLocaleDateString()})`
+			)
+			.join('\n')}
 
 		**Detailed patches for analysis:**
-		${validPatches.map((p: any) => `
+		${validPatches
+			.map(
+				(p: any) => `
 		### Commit ${p.sha.substring(0, 7)}
 		Date: ${new Date(p.date).toLocaleString()}
 		Message: ${p.message}
@@ -400,7 +426,9 @@ export const GithubService = {
 		\`\`\`patch
 		${p.patch.substring(0, 3000)}${p.patch.length > 3000 ? '\n...(truncated)' : ''}
 		\`\`\`
-		`).join('\n---\n')}
+		`
+			)
+			.join('\n---\n')}
 
 		Please analyze these commits to understand what ${author} worked on during this period. Focus on:
 		1. What features or functionality were added/modified
@@ -413,6 +441,145 @@ export const GithubService = {
 				{
 					type: 'text',
 					text: output
+				}
+			]
+		};
+	},
+	/**
+	 * Get a single issue for a repo by issue number.
+	 * @param owner string (required)
+	 * @param repo string (required)
+	 * @param issue_number number (required)
+	 */
+	getIssue: async (owner: string, repo: string, issue_number: number) => {
+		const GITHUB_TOKEN = process.env.GITHUB_TOKEN || '';
+		const apiUrl = `https://api.github.com/repos/${owner}/${repo}/issues/${issue_number}`;
+		const response = await fetch(apiUrl, {
+			headers: {
+				Authorization: `Bearer ${GITHUB_TOKEN}`
+			}
+		});
+		if (!response.ok) {
+			throw new Error(`GitHub API error: ${response.statusText}`);
+		}
+		const data = await response.json();
+
+		console.log(data);
+
+		// Format the issue data as text for MCP response
+		const issueText = `Issue #${data.number}: ${data.title}
+State: ${data.state}
+Author: ${data.user?.login || 'Unknown'}
+Created: ${data.created_at}
+Updated: ${data.updated_at}
+URL: ${data.html_url}
+
+${data.body || 'No description provided.'}
+
+Labels: ${data.labels?.map((label: any) => label.name).join(', ') || 'None'}
+Assignees: ${
+			data.assignees?.map((assignee: any) => assignee.login).join(', ') ||
+			'None'
+		}
+Comments: ${data.comments || 0}`;
+
+		return {
+			content: [
+				{
+					type: 'text',
+					text: issueText
+				}
+			]
+		};
+	},
+
+	/**
+	 * Get multiple issues for a repo with flexible query params.
+	 * @param owner string (required)
+	 * @param repo string (required)
+	 * @param options object (all query params optional)
+	 */
+	getIssues: async (
+		owner: string,
+		repo: string,
+		options?: {
+			filter?: string;
+			state?: string;
+			labels?: string;
+			sort?: string;
+			direction?: string;
+			since?: string;
+			collab?: boolean;
+			orgs?: boolean;
+			owned?: boolean;
+			pulls?: boolean;
+			per_page?: number;
+			page?: number;
+		}
+	) => {
+		const GITHUB_TOKEN = process.env.GITHUB_TOKEN || '';
+		const params = new URLSearchParams();
+		if (options) {
+			if (options.filter) params.append('filter', options.filter);
+			if (options.state) params.append('state', options.state);
+			if (options.labels) params.append('labels', options.labels);
+			if (options.sort) params.append('sort', options.sort);
+			if (options.direction) params.append('direction', options.direction);
+			if (options.since) params.append('since', options.since);
+			if (options.collab !== undefined)
+				params.append('collab', String(options.collab));
+			if (options.orgs !== undefined)
+				params.append('orgs', String(options.orgs));
+			if (options.owned !== undefined)
+				params.append('owned', String(options.owned));
+			if (options.pulls !== undefined)
+				params.append('pulls', String(options.pulls));
+			if (options.per_page) params.append('per_page', String(options.per_page));
+			if (options.page) params.append('page', String(options.page));
+		}
+		const paramString = params.toString();
+		const apiUrl = `https://api.github.com/repos/${owner}/${repo}/issues${
+			paramString ? `?${paramString}` : ''
+		}`;
+		console.log(apiUrl);
+		const response = await fetch(apiUrl, {
+			headers: {
+				Authorization: `Bearer ${GITHUB_TOKEN}`
+			}
+		});
+		if (!response.ok) {
+			throw new Error(`GitHub API error: ${response.statusText}`);
+		}
+		const data = await response.json();
+
+		// Format issues as text for MCP response
+		if (!Array.isArray(data) || data.length === 0) {
+			return {
+				content: [
+					{
+						type: 'text',
+						text: 'No issues found for the specified criteria.'
+					}
+				]
+			};
+		}
+
+		const issuesText = data
+			.map((issue: any) => {
+				return `Issue #${issue.number}: ${issue.title}
+State: ${issue.state}
+Author: ${issue.user?.login || 'Unknown'}
+URL: ${issue.html_url}
+Created: ${issue.created_at}
+Labels: ${issue.labels?.map((label: any) => label.name).join(', ') || 'None'}`;
+			})
+			.join('\n\n-------------------\n\n');
+
+		return {
+			content: [
+				{
+					type: 'text',
+					text: issuesText
 				}
 			]
 		};

@@ -25,7 +25,9 @@ import {
 	callGetCommitDetailsTool,
 	callAnalyzeAuthorWorkTool,
 	listTools,
-	callPullRequestsTool
+	callPullRequestsTool,
+	callIssuesTool,
+	callIssueTool
 } from './tools/tools.js';
 
 server.setRequestHandler(ListToolsRequestSchema, async () => {
@@ -50,6 +52,12 @@ server.setRequestHandler(CallToolRequestSchema, async request => {
 	}
 	if (request.params.name === 'get_pull_requests') {
 		return callPullRequestsTool(request.params.arguments);
+	}
+	if (request.params.name === 'get_issue') {
+		return callIssueTool(request.params.arguments);
+	}
+	if (request.params.name === 'get_issues') {
+		return callIssuesTool(request.params.arguments);
 	}
 	// Handle unknown tool
 	return {
