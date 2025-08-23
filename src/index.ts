@@ -24,14 +24,16 @@ import { callRepoBranchesTool } from './tools/branches.js';
 import {
 	callIssuesTool,
 	callIssueTool,
-	callIssueCommits
+	callIssueCommits,
+	callEstimateIssueProgressTool
 } from './tools/issues.js';
 import { callPullRequestsTool } from './tools/pullRequests.js';
 import {
 	callCommitsTool,
 	callCompareCommitsTool,
 	callGetCommitDetailsTool,
-	callAnalyzeAuthorWorkTool
+	callAnalyzeAuthorWorkTool,
+	callGetBranchCommitsTool
 } from './tools/commits.js';
 
 server.setRequestHandler(ListToolsRequestSchema, async () => {
@@ -62,6 +64,12 @@ server.setRequestHandler(CallToolRequestSchema, async request => {
 	}
 	if (request.params.name === 'get_issues') {
 		return callIssuesTool(request.params.arguments);
+	}
+	if (request.params.name === 'estimate_issue_progress') {
+		return callEstimateIssueProgressTool(request.params.arguments);
+	}
+	if (request.params.name === 'get_branch_commits') {
+		return callGetBranchCommitsTool(request.params.arguments);
 	}
 	// Handle unknown tool
 	return {

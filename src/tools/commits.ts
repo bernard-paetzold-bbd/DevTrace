@@ -1,6 +1,7 @@
 import z from 'zod';
 import { extractUrlInformation } from '../utils/extractUrlInformation.js';
 import { GithubService } from '../services/github/githubService.js';
+import { getBranchCommits } from '../services/github/commitsService.js';
 
 export async function callCommitsTool(args: any) {
 	try {
@@ -103,6 +104,34 @@ export async function callAnalyzeAuthorWorkTool(args: any) {
 				{
 					type: 'text',
 					text: `Error analyzing author work: \n  ${
+						error instanceof Error ? error.message : 'Unknown error'
+					}`
+				}
+			]
+		};
+	}
+}
+
+export async function callGetBranchCommitsTool(args: any) {
+	try {
+		const schema = z.object({
+			url: z.string().describe('Repository url you want to query'),
+			branch: z.string().describe('The feature branch to get commits for'),
+			base_branch: z
+				.string()
+				.optional()
+				.describe('The base branch to compare against (defaults to "main")')
+		});
+		const { url, branch, base_branch } = schema.parse(args);
+		const { owner, repo } = extractUrlInformation(url);
+		return await getBranchCommits(owner, repo, branch, base_branch);
+	} catch (error) {
+		return {
+			isError: true,
+			content: [
+				{
+					type: 'text',
+					text: `Error getting branch commits: \n  ${
 						error instanceof Error ? error.message : 'Unknown error'
 					}`
 				}

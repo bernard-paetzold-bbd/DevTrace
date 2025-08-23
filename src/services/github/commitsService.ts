@@ -1,3 +1,27 @@
+import { GithubService } from './githubService.js';
+
+// Type definitions for commits
+export interface CommitAuthor {
+	name: string;
+	email: string;
+	date: string;
+}
+
+export interface CommitData {
+	sha: string;
+	message: string;
+	author: CommitAuthor;
+	url: string;
+}
+
+export interface CommitsResponse {
+	commits: CommitData[];
+	content: Array<{
+		type: string;
+		text: string;
+	}>;
+}
+
 /**
  * Get commits for a repo with flexible query params.
  * @param owner string (required)
@@ -17,7 +41,7 @@ export const getCommits = async (
 		per_page?: number;
 		page?: number;
 	}
-) => {
+): Promise<CommitsResponse> => {
 	const GITHUB_TOKEN = process.env.GITHUB_TOKEN || '';
 	const params = new URLSearchParams();
 	if (options) {
@@ -48,20 +72,89 @@ export const getCommits = async (
 	}
 	const data = await response.json();
 
-	const commits = data
-		.map((c: any) => {
-			const message = c.commit.message;
-			const hash = c.sha;
-			const author = c.commit.author?.name || 'Unknown';
-			const date = c.commit.author?.date || 'Unknown';
-			return `Commit: ${hash}\nAuthor: ${author}\nDate: ${date}\nMessage: ${message}\n`;
+	// Create structured commit data
+	const commits: CommitData[] = data.map((c: any) => ({
+		sha: c.sha,
+		message: c.commit.message,
+		author: {
+			name: c.commit.author?.name || 'Unknown',
+			email: c.commit.author?.email || 'Unknown',
+			date: c.commit.author?.date || 'Unknown'
+		},
+		url: c.html_url
+	}));
+
+	// Create text representation for compatibility
+	const commitsText = commits
+		.map(c => {
+			return `Commit: ${c.sha}\nAuthor: ${c.author.name}\nDate: ${c.author.date}\nMessage: ${c.message}\n`;
 		})
 		.join('\n---------------------\n');
+
 	return {
+		commits,
 		content: [
 			{
 				type: 'text',
-				text: commits
+				text: commitsText
+			}
+		]
+	};
+};
+
+/**
+ * Get commits made only on a specific branch (not inherited from base branch)
+ * @param owner string (required)
+ * @param repo string (required)
+ * @param branch string (required) - the feature branch
+ * @param baseBranch string (optional) - the base branch to compare against (defaults to 'main')
+ */
+export const getBranchCommits = async (
+	owner: string,
+	repo: string,
+	branch: string,
+	baseBranch: string = 'main'
+): Promise<CommitsResponse> => {
+	const GITHUB_TOKEN = process.env.GITHUB_TOKEN || '';
+	const apiUrl = `https://api.github.com/repos/${owner}/${repo}/compare/${baseBranch}...${branch}`;
+
+	const response = await fetch(apiUrl, {
+		headers: {
+			Authorization: `Bearer ${GITHUB_TOKEN}`
+		}
+	});
+
+	if (!response.ok) {
+		throw new Error(`GitHub API error: ${response.statusText}`);
+	}
+
+	const data = await response.json();
+
+	// Extract commits that are unique to the branch (not in base)
+	const commits: CommitData[] = (data.commits || []).map((c: any) => ({
+		sha: c.sha,
+		message: c.commit.message,
+		author: {
+			name: c.commit.author?.name || 'Unknown',
+			email: c.commit.author?.email || 'Unknown',
+			date: c.commit.author?.date || 'Unknown'
+		},
+		url: c.html_url
+	}));
+
+	// Create text representation for compatibility
+	const commitsText = commits
+		.map(c => {
+			return `Commit: ${c.sha}\nAuthor: ${c.author.name}\nDate: ${c.author.date}\nMessage: ${c.message}\n`;
+		})
+		.join('\n---------------------\n');
+
+	return {
+		commits,
+		content: [
+			{
+				type: 'text',
+				text: commitsText
 			}
 		]
 	};
@@ -242,13 +335,11 @@ export const analyzeAuthorWork = async (
 	params.append('per_page', '100');
 
 	const apiUrl = `https://api.github.com/repos/${owner}/${repo}/commits?${params.toString()}`;
-	console.log(apiUrl);
 	const response = await fetch(apiUrl, {
 		headers: {
 			Authorization: `Bearer ${GITHUB_TOKEN}`
 		}
 	});
-	console.log(response.body);
 	if (!response.ok) {
 		throw new Error(`GitHub API error: ${response.statusText}`);
 	}
