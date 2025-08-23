@@ -20,7 +20,9 @@ const server = new Server(
 import {
 	callRepoBranchesTool,
 	callCommitsTool,
-	listTools
+	listTools,
+	callIssueTool,
+	callIssueCommits
 } from './tools/tools.js';
 
 server.setRequestHandler(ListToolsRequestSchema, async () => {
@@ -33,6 +35,12 @@ server.setRequestHandler(CallToolRequestSchema, async request => {
 	}
 	if (request.params.name === 'get_commits') {
 		return callCommitsTool(request.params.arguments);
+	}
+	if (request.params.name === 'get_issue') {
+		return callIssueTool(request.params.arguments);
+	}
+	if (request.params.name === 'get_issue_commits') {
+		return callIssueCommits(request.params.arguments);
 	}
 	// Handle unknown tool
 	return {
