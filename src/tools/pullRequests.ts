@@ -34,3 +34,28 @@ export async function callPullRequestsTool(args: any) {
 		};
 	}
 }
+
+export async function callGetPullRequestTool(args: any) {
+	try {
+		const schema = z.object({
+			url: z.string().describe('Repository url you want to query'),
+			pull_number: z.number().describe('The pull request number')
+		});
+		const parsed = schema.parse(args);
+		const { url, pull_number } = parsed;
+		const { owner, repo } = extractUrlInformation(url);
+		return await GithubService.getPullRequest(owner, repo, pull_number);
+	} catch (error) {
+		return {
+			isError: true,
+			content: [
+				{
+					type: 'text',
+					text: `Error retrieving pull request: \n  ${
+						error instanceof Error ? error.message : 'Unknown error'
+					}`
+				}
+			]
+		};
+	}
+}

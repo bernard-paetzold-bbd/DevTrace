@@ -170,6 +170,22 @@ export function listTools() {
 				}
 			},
 			{
+				name: 'get_pull_request',
+				description:
+					'Get or describe a specific pull request by pull request number',
+				inputSchema: {
+					type: 'object',
+					properties: {
+						url: { type: 'string', description: 'Repository url to query' },
+						pull_number: {
+							type: 'number',
+							description: 'Pull request number to retrieve'
+						}
+					},
+					required: ['url', 'pull_number']
+				}
+			},
+			{
 				name: 'get_issue',
 				description: 'Get a specific issue by issue number',
 				inputSchema: {
