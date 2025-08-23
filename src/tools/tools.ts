@@ -69,6 +69,49 @@ export function listTools() {
 					},
 					required: ['url']
 				}
+			},
+			{
+				name: 'get_pull_requests',
+				description:
+					'Get pull requests for a repository with flexible query parameters (state, head, base, sort, direction, etc.)',
+				inputSchema: {
+					type: 'object',
+					properties: {
+						url: { type: 'string', description: 'Repository url to query' },
+						state: {
+							type: 'string',
+							enum: ['open', 'closed', 'all'],
+							description: 'State of the pull requests'
+						},
+						head: {
+							type: 'string',
+							description: 'Filter pulls by head branch'
+						},
+						base: {
+							type: 'string',
+							description: 'Filter pulls by base branch'
+						},
+						sort: {
+							type: 'string',
+							enum: ['created', 'updated', 'popularity', 'long-running'],
+							description: 'Sort order'
+						},
+						direction: {
+							type: 'string',
+							enum: ['asc', 'desc'],
+							description: 'Sort direction'
+						},
+						per_page: {
+							type: 'number',
+							description: 'Number of results per page (max 100)'
+						},
+						page: {
+							type: 'number',
+							description: 'Page number of results to fetch'
+						}
+					},
+					required: ['url']
+				}
 			}
 		]
 	};
@@ -124,4 +167,35 @@ export async function callCommitsTool(args: any) {
 			]
 		};
 	}
+}
+
+export async function callPullRequestsTool(args: any) {
+    try {
+        const schema = z.object({
+            url: z.string().describe('Repository url you want to query'),
+            state: z.enum(['open', 'closed', 'all']).optional(),
+            head: z.string().optional(),
+            base: z.string().optional(),
+            sort: z.enum(['created', 'updated', 'popularity', 'long-running']).optional(),
+            direction: z.enum(['asc', 'desc']).optional(),
+            per_page: z.number().optional(),
+            page: z.number().optional()
+        });
+        const parsed = schema.parse(args);
+        const { url, ...options } = parsed;
+        const { owner, repo } = extractUrlInformation(url);
+        return await GithubService.getPullRequests(owner, repo, options);
+    } catch (error) {
+        return {
+            isError: true,
+            content: [
+                {
+                    type: 'text',
+                    text: `Error searching for pull requests: \n  ${
+                        error instanceof Error ? error.message : 'Unknown error'
+                    }`
+                }
+            ]
+        };
+    }
 }
