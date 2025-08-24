@@ -1,4 +1,45 @@
 /**
+ * Create a new issue in a repository
+ * @param owner string (required)
+ * @param repo string (required) 
+ * @param title string (required) - The title of the issue
+ * @param body string (optional) - The body text of the issue
+ * @param assignees string[] (optional) - Usernames of people to assign
+ * @param labels string[] (optional) - Labels to apply to this issue
+ */
+export const createIssue = async (
+	owner: string,
+	repo: string,
+	title: string,
+	body?: string,
+	assignees?: string[],
+	labels?: string[]
+) => {
+	const GITHUB_TOKEN = process.env.GITHUB_TOKEN || '';
+	const apiUrl = `https://api.github.com/repos/${owner}/${repo}/issues`;
+
+	const payload = {
+		title,
+		body,
+		assignees,
+		labels
+	};
+
+	// Todo add error stuff
+
+
+	// Todo hook up actual response
+	return {
+		content: [
+			{
+				type: 'text',
+				text: 'placeholder'
+			}
+		]
+	};
+};
+
+/**
  * Get a single issue for a repo by issue number.
  * @param owner string (required)
  * @param repo string (required)
