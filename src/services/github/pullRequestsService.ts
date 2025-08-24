@@ -48,14 +48,8 @@ export const getPullRequests = async (
 	}
 	const pulls = data
 		.map((pr: any) => {
-			const title = pr.title;
-			const number = pr.number;
-			const user = pr.user?.login || 'Unknown';
-			const state = pr.state;
-			const created = pr.created_at;
-            const head = pr.head?.sha || 'Unknown';
-            const base = pr.base?.sha || 'Unknown';
-			return `#${number} [${state}] by ${user} on ${created}\nTitle: ${title}\nHead: ${head}\nBase: ${base}\n`;
+			// Show all relevant PR info as pretty-printed JSON
+			return JSON.stringify(pr, null, 2);
 		})
 		.join('\n---------------------\n');
 	return {
@@ -63,6 +57,32 @@ export const getPullRequests = async (
 			{
 				type: 'text',
 				text: pulls
+			}
+		]
+	};
+};
+
+export const getPullRequest = async (
+	owner: string,
+	repo: string,
+	pull_number: number
+) => {
+	const GITHUB_TOKEN = process.env.GITHUB_TOKEN || '';
+	const apiUrl = `https://api.github.com/repos/${owner}/${repo}/pulls/${pull_number}`;
+	const response = await fetch(apiUrl, {
+		headers: {
+			Authorization: `Bearer ${GITHUB_TOKEN}`
+		}
+	});
+	if (!response.ok) {
+		throw new Error(`GitHub API error: ${response.statusText}`);
+	}
+	const data = await response.json();
+	return {
+		content: [
+			{
+				type: 'text',
+				text: JSON.stringify(data, null, 2)
 			}
 		]
 	};
