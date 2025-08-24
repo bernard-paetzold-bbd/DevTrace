@@ -152,15 +152,6 @@ export async function callEstimateIssueProgressTool(args: any) {
 		let issueCommits = await getBranchCommits(owner, repo, branch);
 		const allCommits = await getCommits(owner, repo, { sha: branch });
 
-		// If no commits found (probably already merged), fall back to generic commits endpoint
-		if (
-			!('commits' in issueCommits) ||
-			!issueCommits.commits ||
-			issueCommits.commits.length === 0
-		) {
-			issueCommits = allCommits;
-		}
-
 		// Check if we have commits and they're in the expected format
 		if (
 			'commits' in issueCommits &&
