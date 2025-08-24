@@ -44,7 +44,12 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
 	return listTools();
 });
 
+import { callCreateIssueTool } from './tools/createIssue.js';
+
 server.setRequestHandler(CallToolRequestSchema, async request => {
+	if (request.params.name === 'create_issue') {
+		return callCreateIssueTool(request.params.arguments);
+	}
 	if (request.params.name === 'get_issue_or_pr_timeline') {
 		return callGetIssueOrPrTimelineTool(request.params.arguments);
 	}
