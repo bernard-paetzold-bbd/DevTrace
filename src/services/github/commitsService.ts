@@ -134,7 +134,7 @@ export const getBranchCommits = async (
 	const data = await response.json();
 
 	// Extract commits that are unique to the branch (not in base)
-	const commits: CommitData[] = (data.commits || []).map((c: any) => ({
+	let commits: CommitData[] = (data.commits || []).map((c: any) => ({
 		sha: c.sha,
 		message: c.commit.message,
 		author: {
@@ -144,6 +144,28 @@ export const getBranchCommits = async (
 		},
 		url: c.html_url
 	}));
+
+	// If no commits found (probably already merged), fall back to generic commits endpoint
+	if (!commits || commits.length === 0) {
+		// Use the generic getCommits endpoint for the branch
+		const fallback = await getCommits(owner, repo, { sha: branch });
+		commits = fallback.commits;
+		// Create text representation for compatibility
+		const commitsText = commits
+			.map(c => {
+				return `Commit: ${c.sha}\nAuthor: ${c.author.name}\nDate: ${c.author.date}\nMessage: ${c.message}\n`;
+			})
+			.join('\n---------------------\n');
+		return {
+			commits,
+			content: [
+				{
+					type: 'text',
+					text: commitsText
+				}
+			]
+		};
+	}
 
 	// Create text representation for compatibility
 	const commitsText = commits

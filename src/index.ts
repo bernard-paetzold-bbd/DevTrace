@@ -64,7 +64,14 @@ server.setRequestHandler(CallToolRequestSchema, async request => {
 		return callAnalyzeAuthorWorkTool(request.params.arguments);
 	}
 	if (request.params.name === 'get_pull_requests') {
-		return callPullRequestsTool(request.params.arguments);
+		let output = await callPullRequestsTool(request.params.arguments);
+
+		output.content.map((item: any) => {
+			item.text +=
+				'\n\nIf the user asked for an explaination, call [compare_commits] on the BASE and HEAD commits in that PR to provide that information';
+		});
+
+		return output;
 	}
 	if (request.params.name === 'get_issue') {
 		let output = await callIssueTool(request.params.arguments);
@@ -93,7 +100,12 @@ server.setRequestHandler(CallToolRequestSchema, async request => {
 		return callGetBranchCommitsTool(request.params.arguments);
 	}
 	if (request.params.name === 'get_pull_request') {
-		return callGetPullRequestTool(request.params.arguments);
+		let output = await callGetPullRequestTool(request.params.arguments);
+
+		output.content.map((item: any) => {
+			item.text +=
+				'\n\nIf the user asked for an explaination, call [compare_commits] on the BASE and HEAD commits in that PR to provide that information';
+		});
 	}
 	// Handle unknown tool
 	return {
