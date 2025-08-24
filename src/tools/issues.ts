@@ -8,6 +8,7 @@ import {
 	getCommits,
 	type CommitsResponse
 } from '../services/github/commitsService.js';
+import { outputWrapper } from './outputWrapper.js';
 
 export async function callIssueTool(args: any) {
 	try {
@@ -144,6 +145,10 @@ export async function callEstimateIssueProgressTool(args: any) {
 			};
 		}
 
+		const branchPrs = await GithubService.getPullRequests(owner, repo, {
+			head: branch
+		});
+
 		let issueCommits = await getBranchCommits(owner, repo, branch);
 		const allCommits = await getCommits(owner, repo, { sha: branch });
 
@@ -213,11 +218,13 @@ export async function callEstimateIssueProgressTool(args: any) {
 				content: [
 					{
 						type: 'text',
-						text: `Issue: ${JSON.stringify(issue, null, 2)}\n\nCommits:\n${
-							issueCommits.content[0]?.text
-						}\n\nDiff: ${
-							diff.content[0]?.text || 'No diff available'
-						}\n\nAnalyse diffs and always provide a heading giving an estimated percentage completion of the issue. Be detailed and use tables if relevant to display information and format the output well. Always give an estimated completion percentage.`
+						text: outputWrapper(
+							`Issue: ${JSON.stringify(issue, null, 2)}\n\nCommits:\n${
+								issueCommits.content[0]?.text
+							}\n\nPRs: ${branchPrs || 'No PRs found'}\n\nDiff: ${
+								diff.content[0]?.text || 'No diff available'
+							}\n\nAnalyse diffs and always provide a heading giving an estimated percentage completion of the issue. Be detailed and use tables if relevant to display information and format the output well. Always give an estimated completion percentage.`
+						)
 					}
 				]
 			};

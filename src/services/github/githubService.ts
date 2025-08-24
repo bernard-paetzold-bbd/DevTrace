@@ -6,12 +6,13 @@ import {
 	getCommits
 } from './commitsService.js';
 import { getIssue, getIssues } from './issuesService.js';
-import { getPullRequests } from './pullRequestsService.js';
+import { getPullRequest, getPullRequests } from './pullRequestsService.js';
 
 export const GithubService = {
 	getBranches: getBranches,
 
 	getPullRequests: getPullRequests,
+	getPullRequest: getPullRequest,
 
 	getCommits: getCommits,
 	compareCommits: compareCommits,

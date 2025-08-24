@@ -27,7 +27,10 @@ import {
 	callIssueCommits,
 	callEstimateIssueProgressTool
 } from './tools/issues.js';
-import { callPullRequestsTool } from './tools/pullRequests.js';
+import {
+	callGetPullRequestTool,
+	callPullRequestsTool
+} from './tools/pullRequests.js';
 import {
 	callCommitsTool,
 	callCompareCommitsTool,
@@ -70,6 +73,9 @@ server.setRequestHandler(CallToolRequestSchema, async request => {
 	}
 	if (request.params.name === 'get_branch_commits') {
 		return callGetBranchCommitsTool(request.params.arguments);
+	}
+	if (request.params.name === 'get_pull_request') {
+		return callGetPullRequestTool(request.params.arguments);
 	}
 	// Handle unknown tool
 	return {

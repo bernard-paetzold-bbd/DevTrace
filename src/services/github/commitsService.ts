@@ -58,7 +58,7 @@ export const getCommits = async (
 	if (!params.has('per_page')) {
 		params.append(
 			'per_page',
-			String(Number(process.env.MAX_COMMIT_HISTORY) || 50)
+			String(Number(process.env.MAX_COMMIT_HISTORY) || 100)
 		);
 	}
 	const apiUrl = `https://api.github.com/repos/${owner}/${repo}/commits?${params.toString()}`;
@@ -126,8 +126,6 @@ export const getBranchCommits = async (
 			Authorization: `Bearer ${GITHUB_TOKEN}`
 		}
 	});
-
-	console.log(apiUrl.trim());
 
 	if (!response.ok) {
 		throw new Error(`GitHub API error: ${response.statusText}`);
