@@ -34,6 +34,12 @@ jobs:
       - name: Build the project
         run: npm run build
 
+      - name: Copy over additional files
+        run: cp package.json ./build
+      
+      - name: Copy over the node_modules foler
+        run: cp -r node_modules ./build/node_modules
+
       - name: Zip the build folder
         run: zip -r dev-trace.zip build
 
