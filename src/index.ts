@@ -38,12 +38,16 @@ import {
 	callAnalyzeAuthorWorkTool,
 	callGetBranchCommitsTool
 } from './tools/commits.js';
+import { callGetIssueOrPrTimelineTool } from './tools/timeline.js';
 
 server.setRequestHandler(ListToolsRequestSchema, async () => {
 	return listTools();
 });
 
 server.setRequestHandler(CallToolRequestSchema, async request => {
+	if (request.params.name === 'get_issue_or_pr_timeline') {
+		return callGetIssueOrPrTimelineTool(request.params.arguments);
+	}
 	if (request.params.name === 'get_repo_branches') {
 		return callRepoBranchesTool(request.params.arguments);
 	}
@@ -63,13 +67,27 @@ server.setRequestHandler(CallToolRequestSchema, async request => {
 		return callPullRequestsTool(request.params.arguments);
 	}
 	if (request.params.name === 'get_issue') {
-		return callIssueTool(request.params.arguments);
+		let output = await callIssueTool(request.params.arguments);
+
+		output.content.map((item: any) => {
+			item.text +=
+				'\n\nIf the user asked for status or progress at all [estimate_issue_progress_or_status] to provide that information';
+		});
+
+		return output;
 	}
 	if (request.params.name === 'get_issues') {
 		return callIssuesTool(request.params.arguments);
 	}
-	if (request.params.name === 'estimate_issue_progress') {
-		return callEstimateIssueProgressTool(request.params.arguments);
+	if (request.params.name === 'estimate_issue_progress_or_status') {
+		let output = await callEstimateIssueProgressTool(request.params.arguments);
+
+		output.content.map((item: any) => {
+			item.text +=
+				'\n\nIf no branch was found, call [get_branches] and attempt to find the branch from there, then call [get_branch_commits] to estimate the progress. After this, call [get_issue_or_pr_timeline] for additional context to include in the estimation';
+		});
+
+		return output;
 	}
 	if (request.params.name === 'get_branch_commits') {
 		return callGetBranchCommitsTool(request.params.arguments);
