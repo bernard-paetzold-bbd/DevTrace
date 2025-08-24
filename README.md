@@ -63,7 +63,7 @@ DevTrace is designed to be accessible to all team members, not just developers. 
 
 ### VS Code
 
-https://github.com/user-attachments/assets/7c8fa706-10a4-4069-bcf2-0bcb92b28514
+https://github.com/user-attachments/assets/e760fa57-ab43-4b75-9f44-51b2663539f9
 
 - Open your Copilot window
 - Click on the Configure tools button below the chat input
@@ -85,7 +85,7 @@ https://github.com/user-attachments/assets/7c8fa706-10a4-4069-bcf2-0bcb92b28514
 			"type": "stdio",
 			"command": "node",
 			"args": [
-				"C:\\Users\\bbdnet2817\\OneDrive - BBD Software Development\\Desktop\\dev-trace\\index.js"
+				"C:Users\\Example\\Desktop\\dev-trace\\index.js"
 			],
 			"env": {
 				"GITHUB_TOKEN": "your_token_here"
