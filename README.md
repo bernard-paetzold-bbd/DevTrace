@@ -61,18 +61,40 @@ DevTrace is designed to be accessible to all team members, not just developers. 
 
 ## Getting Started
 
-1. **Install dependencies:**
-   ```sh
-   npm install
-   ```
-2. **Build the project:**
-   ```sh
-   npm run build
-   ```
-3. **Run the MCP server:**
-   ```sh
-   node build/index.js
-   ```
+### VS Code
+
+https://github.com/user-attachments/assets/7c8fa706-10a4-4069-bcf2-0bcb92b28514
+
+- Open your Copilot window
+- Click on the Configure tools button below the chat input
+- Select Add MCP server in the top right
+- Select stdio
+- Enter "node" as the command to run
+- Enter what you would like to name the server (dev-trace)
+- Select "Global" or "Workspace" as desired
+- Enter the path to the downloaded server files in the "args" field
+- Add an "env" attribute as shown in the video and the example below
+- Enter your github token to the "env" (ensure it has read permissions for the repositories you would like to query)
+- Restart the server and open a new chat window
+- Your new tools should now be available
+
+```JSON
+{
+	"servers": {
+		"dev-trace": {
+			"type": "stdio",
+			"command": "node",
+			"args": [
+				"C:\\Users\\bbdnet2817\\OneDrive - BBD Software Development\\Desktop\\dev-trace\\index.js"
+			],
+			"env": {
+				"GITHUB_TOKEN": "your_token_here"
+			}
+		}
+	},
+	"inputs": []
+}
+```
 
 ---
 
