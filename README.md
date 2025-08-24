@@ -63,7 +63,7 @@ DevTrace is designed to be accessible to all team members, not just developers. 
 
 ### VS Code
 
-https://github.com/user-attachments/assets/e760fa57-ab43-4b75-9f44-51b2663539f9
+https://github.com/user-attachments/assets/05d5224a-f4fd-4bfd-893a-b64626cc4206
 
 - Open your Copilot window
 - Click on the Configure tools button below the chat input
