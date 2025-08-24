@@ -245,7 +245,7 @@ export function listTools() {
 				}
 			},
 			{
-				name: 'estimate_issue_progress',
+				name: 'estimate_issue_progress_or_status',
 				description:
 					'Estimate the progress of an issue based on its commits, get its current status, and use the returned issue description to estimate the progress.',
 				inputSchema: {
@@ -279,6 +279,24 @@ export function listTools() {
 						}
 					},
 					required: ['url', 'branch']
+				}
+			},
+			{
+				name: 'get_issue_or_pr_timeline',
+				description:
+					'Get a timeline of activity (comments, status changes, assignments, etc.) for a given issue or pull request.',
+				inputSchema: {
+					type: 'object',
+					properties: {
+						url: { type: 'string', description: 'Repository url to query' },
+						number: { type: 'number', description: 'Issue or PR number' },
+						type: {
+							type: 'string',
+							enum: ['issue', 'pr'],
+							description: 'Specify whether this is an issue or a pull request'
+						}
+					},
+					required: ['url', 'number', 'type']
 				}
 			}
 		]
